@@ -3,6 +3,7 @@ import re
 import shutil
 import configparser
 import pyodbc
+import jaydebeapi
 import backoff
 
 # pylint: disable=no-member
@@ -63,12 +64,17 @@ def setup_port_configuration(config):
 def connection(config):
     # Docs on keywords this driver accepts:
     # https://www.ibm.com/support/knowledgecenter/ssw_ibm_i_71/rzaik/rzaikconnstrkeywordsgeneralprop.htm
+    return jaydebeapi.connect(config["jdbc_driver"],
+            config["jdbc_chain"],
+            [config["user"], config["password"]],
+            config['jar_location'],)
+    '''
     return pyodbc.connect(
         driver="{IBM i Access ODBC Driver 64-bit}",
         system=config["host"],
         uid=config["user"],
         pwd=config["password"])
-
+    '''
 
 class get_cursor(object):
     def __init__(self, config):

@@ -4,7 +4,7 @@ from singer import utils
 from singer.catalog import Catalog
 from . import resolve, sync, discovery, common
 
-REQUIRED_CONFIG_KEYS = ["host", "user", "password"]
+REQUIRED_CONFIG_KEYS = ["jdbc_driver","jdbc_chain", "user", "password","jar_location"]
 LOGGER = singer.get_logger()
 
 
@@ -16,7 +16,7 @@ def do_sync(args, input_catalog):
 
 def main_impl():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
-    common.setup_port_configuration(args.config)
+    #common.setup_port_configuration(args.config)
     if args.discover:
         discovery.discover(args.config).dump()
         print()

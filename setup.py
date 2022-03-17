@@ -11,6 +11,8 @@ setup(
     install_requires=[
         "singer-python==5.0.4",
         "pyodbc>4,<5",
+        "pytz",
+        "JayDeBeApi"
     ],
     entry_points="""
     [console_scripts]
