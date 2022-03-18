@@ -7,7 +7,7 @@ import singer.metrics as metrics
 from singer.catalog import CatalogEntry
 from singer import write_message as _emit
 from singer import metadata
-from .common import get_cursor
+from .common import get_cursor, yield_jdbc
 
 LOGGER = singer.get_logger()
 _get_bk = singer.get_bookmark
@@ -37,6 +37,7 @@ def _get_replication_key(state: dict, catalog_entry: CatalogEntry):
     if value and _is_datetime_col(catalog_entry, column):
         value = pendulum.parse(value)
     return ReplicationKey(column, value)
+
 
 
 def _sql_data_type(catalog_entry, column):
@@ -148,7 +149,7 @@ def _sync_table(config, state, catalog_entry):
         LOGGER.info("Running %s PARAMS (%s)", select, params)
         cursor.execute(select, params)
         rows_saved = 0
-        for row in cursor:
+        for row in yield_jdbc(cursor):
             rows_saved += 1
             record_message = _row_to_record(catalog_entry, stream_version, row,
                                             columns)
