@@ -17,6 +17,9 @@ def do_sync(args, input_catalog):
 def main_impl():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
     #common.setup_port_configuration(args.config)
+    #Default db type (for discovery queries)
+    if db_type not in args:
+        args['db_type'] = "DB2"
     if args.discover:
         discovery.discover(args.config).dump()
         print()
