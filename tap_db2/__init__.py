@@ -18,7 +18,7 @@ def main_impl():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
     #common.setup_port_configuration(args.config)
     #Default db type (for discovery queries)
-    if db_type not in args.config:
+    if "db_type" not in args.config:
         args.config['db_type'] = "DB2"
     if args.discover:
         discovery.discover(args.config).dump()
