@@ -37,13 +37,22 @@ def _question_marks(lst):
 def _query_tables(config):
     """Queries the qsys2 tables catalog and returns an iterator containing the
     raw results."""
-    sql = """
+    if config["db_type"] == "DB2":
+        sql = """
+        SELECT sys.tabschema,
+               sys.tabname,
+               sys.type
+          FROM syscat.tables sys
+         WHERE table_type IN ({})
+        """.format(_question_marks(SUPPORTED_TYPES))        
+    else: 
+        sql = """
         SELECT table_schema,
                table_name,
                table_type
           FROM qsys2.systables
          WHERE table_type IN ({})
-    """.format(_question_marks(SUPPORTED_TYPES))
+        """.format(_question_marks(SUPPORTED_TYPES))
     bindings = list(SUPPORTED_TYPES)
     schema_csv = config.get("filter_schemas", "")
     schemas_ = [s.strip() for s in next(csv.reader([schema_csv]))]
@@ -63,31 +72,56 @@ def _query_columns(config):
         schema_csv = config.get("filter_schemas", "")
         binds = [s.strip() for s in next(csv.reader([schema_csv]))]
         if len(binds) != 0:
-            sql = """
-            SELECT table_schema,
-                   table_name,
-                   column_name,
-                   data_type,
-                   character_maximum_length,
-                   numeric_precision,
-                   numeric_scale,
-                   ccsid
-              FROM qsys2.syscolumns
-             WHERE table_schema IN ({})
-            """.format(_question_marks(binds))
+            if config["db_type"] == "DB2":
+                """SELECT sys.TABSCHEMA as table_schema,
+                          sys.TABNAME as table_name,
+                          sys.COLNAME as column_name,
+                          sys.typename as datatype,
+                          sys.LENGTH as character_maximum_length,
+                          case when sys.TYPENAME = 'DECIMAL' then sys.LENGTH else null end as numeric_precision,
+                          sys.scale as numeric_scale,
+                          sys.text as ccsid
+                    FROM syscat.COLUMNS sys
+                    WHERE table_schema IN ({})
+      """.format(_question_marks(binds))
+            else:
+                sql = """
+                SELECT table_schema,
+                       table_name,
+                       column_name,
+                       data_type,
+                       character_maximum_length,
+                       numeric_precision,
+                       numeric_scale,
+                       ccsid
+                  FROM qsys2.syscolumns
+                 WHERE table_schema IN ({})
+                """.format(_question_marks(binds))
             LOGGER.info("sql: %s, binds: %s", sql, binds)
             cursor.execute(sql, binds)
         else:
-            cursor.execute("""
-            SELECT table_schema,
-                   table_name,
-                   column_name,
-                   data_type,
-                   character_maximum_length,
-                   numeric_precision,
-                   numeric_scale
-              FROM qsys2.syscolumns
-            """)
+            if config["db_type"] == "DB2":
+                cursor.execute("""
+                SELECT sys.TABSCHEMA as table_schema,
+                          sys.TABNAME as table_name,
+                          sys.COLNAME as column_name,
+                          sys.typename as datatype,
+                          sys.LENGTH as character_maximum_length,
+                          case when sys.TYPENAME = 'DECIMAL' then sys.LENGTH else null end as numeric_precision,
+                          sys.scale as numeric_scale,
+                    FROM syscat.COLUMNS sys
+                """)
+            else:
+                cursor.execute("""
+                SELECT table_schema,
+                       table_name,
+                       column_name,
+                       data_type,
+                       character_maximum_length,
+                       numeric_precision,
+                       numeric_scale
+                  FROM qsys2.syscolumns
+                """)
         yield from cursor
 
 def _query_primary_keys(config):
@@ -203,12 +237,12 @@ def _update_entry_for_table_type(catalog_entry, table_type):
 def discover(config):
     tables = _find_tables(config)
     columns = _find_columns(config, tables)
-    pks = _find_primary_keys(config, tables)
+    #pks = _find_primary_keys(config, tables)
     entries = []
     for table_id in tables:
         table_schema, table_name = table_id
         cols = columns.get(table_id, [])
-        pk_columns = pks.get(table_id, [])
+        pk_columns = [] #pks.get(table_id, [])
         schema = schemas.generate(cols, pk_columns)
         entry = CatalogEntry(
             database=table_schema,
