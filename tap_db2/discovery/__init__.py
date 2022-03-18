@@ -26,9 +26,11 @@ Column = namedtuple("Column", [
 
 SUPPORTED_TYPES = {"T", "V", "P"}
 
-
 def _question_marks(lst):
     return ",".join("?" * len(lst))
+
+def _replace_lst(lst):
+    return ",".join(f'"{key}"' for key in lst)
 
 # Note the _query_* functions mainly exist for the sake of mocking in unit
 # tests. Normally I would prefer to have integration tests than mock out this
@@ -44,7 +46,7 @@ def _query_tables(config):
                sys.type as table_type
           FROM syscat.tables sys
          WHERE sys.type IN ({})
-        """.format(_question_marks(SUPPORTED_TYPES))        
+        """.format(_replace_lst(SUPPORTED_TYPES))        
     else: 
         sql = """
         SELECT table_schema,
@@ -52,18 +54,16 @@ def _query_tables(config):
                table_type
           FROM qsys2.systables
          WHERE table_type IN ({})
-        """.format(_question_marks(SUPPORTED_TYPES))
-    bindings = list(SUPPORTED_TYPES)
+        """.format(_replace_lst(SUPPORTED_TYPES))
     schema_csv = config.get("filter_schemas", "")
     schemas_ = [s.strip() for s in next(csv.reader([schema_csv]))]
     if schemas_:
         if config["db_type"] == "DB2":
-            sql += "AND sys.tabschema IN ({})".format(_question_marks(schemas_))
+            sql += "AND sys.tabschema IN ({})".format(_replace_lst(schemas_))
         else:
-            sql += "AND table_schema IN ({})".format(_question_marks(schemas_))
-        bindings += schemas_
+            sql += "AND table_schema IN ({})".format(_replace_lst(schemas_))
     with get_cursor(config) as cursor:
-        cursor.execute(sql, bindings)
+        cursor.execute(sql)
         yield from cursor
 
 def _query_columns(config):
@@ -86,7 +86,7 @@ def _query_columns(config):
                           sys.text as ccsid
                     FROM syscat.COLUMNS sys
                     WHERE sys.tabschema IN ({})
-      """.format(_question_marks(binds))
+      """.format(_replace_lst(binds))
             else:
                 sql = """
                 SELECT table_schema,
@@ -99,9 +99,9 @@ def _query_columns(config):
                        ccsid
                   FROM qsys2.syscolumns
                  WHERE table_schema IN ({})
-                """.format(_question_marks(binds))
+                """.format(_replace_lst(binds))
             LOGGER.info("sql: %s, binds: %s", sql, binds)
-            cursor.execute(sql, binds)
+            cursor.execute(sql)
         else:
             if config["db_type"] == "DB2":
                 cursor.execute("""
