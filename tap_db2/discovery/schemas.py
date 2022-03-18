@@ -29,7 +29,7 @@ UNSUPPORTED_CCSIDS = {
 # https://www.ibm.com/support/knowledgecenter/ssw_ibm_i_71/db2/rbafzch2datetime.htm
 DATETIME_TYPES = {
     "date",
-    "timestmp",
+    "timestamp",
     "time",
 }
 
