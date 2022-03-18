@@ -37,7 +37,7 @@ def yield_jdbc(cursor):
         record = cursor.fetchone()
         if record is None:
             break
-        yield record
+        yield [r.strip() for r in record]
             
 # Note the _query_* functions mainly exist for the sake of mocking in unit
 # tests. Normally I would prefer to have integration tests than mock out this
@@ -137,17 +137,37 @@ def _query_primary_keys(config):
     """Queries the qsys2 primary key catalog and returns an iterator containing
     the raw results."""
     with get_cursor(config) as cursor:
-        cursor.execute("""
-            SELECT A.table_schema,
-                   A.table_name,
-                   A.column_name,
-                   A.ordinal_position
-              FROM qsys2.syskeycst A
-              JOIN qsys2.syscst B
-                ON A.constraint_schema = B.constraint_schema
-               AND A.constraint_name = B.constraint_name
-             WHERE B.constraint_type = 'PRIMARY KEY'
-        """)
+        if config["db_type"] == "DB2":
+            cursor.execute("""
+                SELECT
+                       a.tabschema as table_schema,
+                       a.tabname as table_name,
+                       a.colname as column_name,
+                       a.colseq as ordinal_position
+                FROM
+                    --qsys2.syskeycst A
+                     syscat.keycoluse a
+                JOIN
+                    --qsys2.syscst B
+                    syscat.tabconst b
+                ON
+                    a.tabschema = b.tabschema
+                    AND a.constname = b.constname
+                WHERE
+                      b.type = 'P'
+            """)
+        else:
+            cursor.execute("""
+                SELECT A.table_schema,
+                       A.table_name,
+                       A.column_name,
+                       A.ordinal_position
+                  FROM qsys2.syskeycst A
+                  JOIN qsys2.syscst B
+                    ON A.constraint_schema = B.constraint_schema
+                   AND A.constraint_name = B.constraint_name
+                 WHERE B.constraint_type = 'PRIMARY KEY'
+            """)
         yield from yield_jdbc(cursor)
 
 
@@ -246,12 +266,12 @@ def _update_entry_for_table_type(catalog_entry, table_type):
 def discover(config):
     tables = _find_tables(config)
     columns = _find_columns(config, tables)
-    #pks = _find_primary_keys(config, tables)
+    pks = _find_primary_keys(config, tables)
     entries = []
     for table_id in tables:
         table_schema, table_name = table_id
         cols = columns.get(table_id, [])
-        pk_columns = [] #pks.get(table_id, [])
+        pk_columns = [] pks.get(table_id, [])
         schema = schemas.generate(cols, pk_columns)
         entry = CatalogEntry(
             database=table_schema,
