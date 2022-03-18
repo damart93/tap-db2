@@ -39,7 +39,7 @@ def _replace_lst(lst):
 def _query_tables(config):
     """Queries the qsys2 tables catalog and returns an iterator containing the
     raw results."""
-    if config["db_type"] == "DB2":
+    if config.get("db_type", "") == "DB2":
         sql = """
                 SELECT sys.tabschema as table_schema, 
                sys.tabname as table_name,
