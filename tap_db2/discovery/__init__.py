@@ -39,11 +39,11 @@ def _query_tables(config):
     raw results."""
     if config["db_type"] == "DB2":
         sql = """
-        SELECT sys.tabschema,
-               sys.tabname,
-               sys.type
+                SELECT sys.tabschema as table_schema, 
+               sys.tabname as table_name,
+               sys.type as table_type
           FROM syscat.tables sys
-         WHERE table_type IN ({})
+         WHERE sys.type IN ({})
         """.format(_question_marks(SUPPORTED_TYPES))        
     else: 
         sql = """
@@ -57,7 +57,10 @@ def _query_tables(config):
     schema_csv = config.get("filter_schemas", "")
     schemas_ = [s.strip() for s in next(csv.reader([schema_csv]))]
     if schemas_:
-        sql += "AND table_schema IN ({})".format(_question_marks(schemas_))
+        if config["db_type"] == "DB2":
+            sql += "AND sys.tabschema IN ({})".format(_question_marks(schemas_))
+        else:
+            sql += "AND table_schema IN ({})".format(_question_marks(schemas_))
         bindings += schemas_
     with get_cursor(config) as cursor:
         cursor.execute(sql, bindings)
@@ -73,16 +76,16 @@ def _query_columns(config):
         binds = [s.strip() for s in next(csv.reader([schema_csv]))]
         if len(binds) != 0:
             if config["db_type"] == "DB2":
-                """SELECT sys.TABSCHEMA as table_schema,
-                          sys.TABNAME as table_name,
-                          sys.COLNAME as column_name,
+                """SELECT sys.tabschema as table_schema,
+                          sys.tabname as table_name,
+                          sys.colname as column_name,
                           sys.typename as datatype,
-                          sys.LENGTH as character_maximum_length,
-                          case when sys.TYPENAME = 'DECIMAL' then sys.LENGTH else null end as numeric_precision,
+                          sys.length as character_maximum_length,
+                          case when sys.typename = 'DECIMAL' then sys.LENGTH else null end as numeric_precision,
                           sys.scale as numeric_scale,
                           sys.text as ccsid
                     FROM syscat.COLUMNS sys
-                    WHERE table_schema IN ({})
+                    WHERE sys.tabschema IN ({})
       """.format(_question_marks(binds))
             else:
                 sql = """
@@ -102,14 +105,14 @@ def _query_columns(config):
         else:
             if config["db_type"] == "DB2":
                 cursor.execute("""
-                SELECT sys.TABSCHEMA as table_schema,
-                          sys.TABNAME as table_name,
-                          sys.COLNAME as column_name,
+                SELECT sys.tabschema as table_schema,
+                          sys.tabname as table_name,
+                          sys.colname as column_name,
                           sys.typename as datatype,
-                          sys.LENGTH as character_maximum_length,
-                          case when sys.TYPENAME = 'DECIMAL' then sys.LENGTH else null end as numeric_precision,
+                          sys.length as character_maximum_length,
+                          case when sys.typename = 'DECIMAL' then sys.length else null end as numeric_precision,
                           sys.scale as numeric_scale,
-                    FROM syscat.COLUMNS sys
+                    FROM syscat.columns sys
                 """)
             else:
                 cursor.execute("""
