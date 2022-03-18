@@ -77,13 +77,12 @@ def _query_columns(config):
     """Queries the qsys2 columns catalog and returns an iterator containing the
     raw results."""
     with get_cursor(config) as cursor:
-        sql = """
-        """
         schema_csv = config.get("filter_schemas", "")
         binds = [s.strip() for s in next(csv.reader([schema_csv]))]
         if len(binds) != 0:
             if config["db_type"] == "DB2":
-                """SELECT sys.tabschema as table_schema,
+                sql = """
+                SELECT sys.tabschema as table_schema,
                           sys.tabname as table_name,
                           sys.colname as column_name,
                           sys.typename as datatype,
@@ -93,7 +92,7 @@ def _query_columns(config):
                           sys.text as ccsid
                     FROM syscat.COLUMNS sys
                     WHERE sys.tabschema IN ({})
-      """.format(_replace_lst(binds))
+                """.format(_replace_lst(binds))
             else:
                 sql = """
                 SELECT table_schema,
