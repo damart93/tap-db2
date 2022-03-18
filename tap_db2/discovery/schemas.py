@@ -10,17 +10,17 @@ BYTES_FOR_INTEGER_TYPE = {
 }
 FLOAT_TYPES = {
     "float",
-    "decfloat",
+    "double",
 }
 DECIMAL_TYPES = {
-    "decimal",
-    "numeric",
+    "decimal"
 }
 
 # https://www.ibm.com/support/knowledgecenter/ssw_ibm_i_71/db2/rbafzcharstrg.htm
 STRING_TYPES = {
-    "char",
-    "varchar",
+    "character",
+    "varchar"
+    "long varchar",
 }
 UNSUPPORTED_CCSIDS = {
     65535,
@@ -38,7 +38,6 @@ VALID_REPLICATION_KEY_TYPES = {
     "integer",
     "bigint",
     "decimal",
-    "numeric",
     "date",
     "timestamp",
 }
