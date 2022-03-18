@@ -71,7 +71,7 @@ def _query_tables(config):
             sql += "AND table_schema IN ({})".format(_replace_lst(schemas_))
     with get_cursor(config) as cursor:
         cursor.execute(sql)
-        yield_jdbc(cursor)
+        yield from yield_jdbc(cursor)
 
 def _query_columns(config):
     """Queries the qsys2 columns catalog and returns an iterator containing the
@@ -132,7 +132,7 @@ def _query_columns(config):
                        numeric_scale
                   FROM qsys2.syscolumns
                 """)
-        yield_jdbc(cursor)
+        yield from yield_jdbc(cursor)
 
 def _query_primary_keys(config):
     """Queries the qsys2 primary key catalog and returns an iterator containing
@@ -149,7 +149,7 @@ def _query_primary_keys(config):
                AND A.constraint_name = B.constraint_name
              WHERE B.constraint_type = 'PRIMARY KEY'
         """)
-        yield_jdbc(cursor)
+        yield from yield_jdbc(cursor)
 
 
 def _table_id(table):
