@@ -40,7 +40,7 @@ VALID_REPLICATION_KEY_TYPES = {
     "decimal",
     "numeric",
     "date",
-    "timestmp",
+    "timestamp",
 }
 
 # Parent article for data types:
