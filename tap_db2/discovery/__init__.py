@@ -37,7 +37,7 @@ def yield_jdbc(cursor):
         record = cursor.fetchone()
         if record is None:
             break
-        yield [r.strip() for r in record]
+        yield [r.strip() if type(r) == str else r for r in record]
             
 # Note the _query_* functions mainly exist for the sake of mocking in unit
 # tests. Normally I would prefer to have integration tests than mock out this
