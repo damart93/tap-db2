@@ -32,6 +32,13 @@ def _question_marks(lst):
 def _replace_lst(lst):
     return ",".join(f"'{key}'" for key in lst)
 
+def yield_jdbc(cursor):
+    while True:
+        record = cursor.fetchone()
+        if record is None:
+            break
+        yield record
+            
 # Note the _query_* functions mainly exist for the sake of mocking in unit
 # tests. Normally I would prefer to have integration tests than mock out this
 # data, but DB2 databases aren't easy to come by and if there is a lot of data
@@ -64,7 +71,7 @@ def _query_tables(config):
             sql += "AND table_schema IN ({})".format(_replace_lst(schemas_))
     with get_cursor(config) as cursor:
         cursor.execute(sql)
-        yield from cursor
+        yield_jdbc(cursor)
 
 def _query_columns(config):
     """Queries the qsys2 columns catalog and returns an iterator containing the
@@ -125,7 +132,7 @@ def _query_columns(config):
                        numeric_scale
                   FROM qsys2.syscolumns
                 """)
-        yield from cursor
+        yield_jdbc(cursor)
 
 def _query_primary_keys(config):
     """Queries the qsys2 primary key catalog and returns an iterator containing
@@ -142,7 +149,7 @@ def _query_primary_keys(config):
                AND A.constraint_name = B.constraint_name
              WHERE B.constraint_type = 'PRIMARY KEY'
         """)
-        yield from cursor
+        yield_jdbc(cursor)
 
 
 def _table_id(table):
