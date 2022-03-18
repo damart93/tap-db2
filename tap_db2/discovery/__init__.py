@@ -30,7 +30,7 @@ def _question_marks(lst):
     return ",".join("?" * len(lst))
 
 def _replace_lst(lst):
-    return ",".join(f'"{key}"' for key in lst)
+    return ",".join(f"'{key}'" for key in lst)
 
 # Note the _query_* functions mainly exist for the sake of mocking in unit
 # tests. Normally I would prefer to have integration tests than mock out this
@@ -39,7 +39,7 @@ def _replace_lst(lst):
 def _query_tables(config):
     """Queries the qsys2 tables catalog and returns an iterator containing the
     raw results."""
-    if config.get("db_type", "") == "DB2":
+    if config["db_type"] == "DB2":
         sql = """
                 SELECT sys.tabschema as table_schema, 
                sys.tabname as table_name,
