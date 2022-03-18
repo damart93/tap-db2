@@ -271,7 +271,7 @@ def discover(config):
     for table_id in tables:
         table_schema, table_name = table_id
         cols = columns.get(table_id, [])
-        pk_columns = [] pks.get(table_id, [])
+        pk_columns = pks.get(table_id, [])
         schema = schemas.generate(cols, pk_columns)
         entry = CatalogEntry(
             database=table_schema,
