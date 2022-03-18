@@ -8,6 +8,13 @@ import backoff
 
 # pylint: disable=no-member
 
+def yield_jdbc(cursor):
+    while True:
+        record = cursor.fetchone()
+        if record is None:
+            break
+        yield [r.strip() if type(r) == str else r for r in record]
+        
 def _write_userprefs(host, port):
     """Creates or updates the ~/.iSeriesAccess/cwb_userprefs.ini file to
     specify a "Port lookup mode", which controls how the driver determines
