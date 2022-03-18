@@ -3,7 +3,7 @@ from collections import namedtuple
 from singer.catalog import Catalog, CatalogEntry
 import singer
 from singer import metadata
-from ..common import get_cursor
+from ..common import get_cursor, yield_jdbc
 from . import schemas
 LOGGER = singer.get_logger()
 
@@ -31,13 +31,6 @@ def _question_marks(lst):
 
 def _replace_lst(lst):
     return ",".join(f"'{key}'" for key in lst)
-
-def yield_jdbc(cursor):
-    while True:
-        record = cursor.fetchone()
-        if record is None:
-            break
-        yield [r.strip() if type(r) == str else r for r in record]
             
 # Note the _query_* functions mainly exist for the sake of mocking in unit
 # tests. Normally I would prefer to have integration tests than mock out this
