@@ -56,6 +56,9 @@ def _desired_columns(selected, table_schema):
 
     return selected.intersection(available).union(automatic)
 
+def is_selected_via_metadata(stream):
+   table_md = metadata.to_map(stream.metadata).get((), {})
+   return table_md.get('selected')
 
 def resolve_catalog(catalog, discovered, state):
     '''Returns the Catalog of data we're going to sync.
@@ -76,7 +79,8 @@ def resolve_catalog(catalog, discovered, state):
     '''
 
     # Filter catalog to include only selected streams
-    streams = list(filter(lambda stream: stream.is_selected(), catalog.streams))
+    #streams = list(filter(lambda stream: stream.is_selected(), catalog.streams))
+    streams = list(filter(lambda stream: is_selected_via_metadata(stream), catalog.streams))
 
     # If the state says we were in the middle of processing a stream, skip
     # to that stream.
