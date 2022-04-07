@@ -79,7 +79,8 @@ def resolve_catalog(catalog, discovered, state):
     '''
 
     # Filter catalog to include only selected streams
-    #streams = list(filter(lambda stream: stream.is_selected(), catalog.streams))
+    streams = list(filter(lambda stream: stream.is_selected(), catalog.streams))
+    # Filter via metadata instead
     streams = list(filter(lambda stream: is_selected_via_metadata(stream), catalog.streams))
 
     # If the state says we were in the middle of processing a stream, skip
@@ -94,15 +95,22 @@ def resolve_catalog(catalog, discovered, state):
     # with the same stream in the discovered catalog.
     for catalog_entry in streams:
         catalog_metadata = metadata.to_map(catalog_entry.metadata)
-        replication_key = catalog_metadata.get((), {}).get('replication-key')
+        #replication_key = catalog_metadata.get((), {}).get('replication-key')
+        replication_key = catalog_entry.replication_key
 
         discovered_table = discovered.get_stream(catalog_entry.tap_stream_id)
         if not discovered_table:
             LOGGER.warning('Database %s table %s was selected but does not exist',
                            catalog_entry.database, catalog_entry.table)
             continue
-        selected = set([k for k, v in catalog_entry.schema.properties.items()
-                        if v.selected or k == replication_key])
+
+        #selected = set([k for k in catalog_entry.schema.properties.items()
+        #                if v.selected or k == replication_key])
+
+        metadata_rows_properties = {k: v for k, v in metadata.to_map(catalog_entry.metadata).items() if len(k) > 0 and k[0] == "properties"}
+
+        selected = set([k[1] for k, v in metadata_rows_properties.items()
+                        if v['selected'] or k[1] == replication_key])
 
         # These are the columns we need to select
         columns = _desired_columns(selected, discovered_table.schema)
