@@ -19,7 +19,7 @@ DECIMAL_TYPES = {
 # https://www.ibm.com/support/knowledgecenter/ssw_ibm_i_71/db2/rbafzcharstrg.htm
 STRING_TYPES = {
     "character",
-    "varchar"
+    "varchar",
     "long varchar",
 }
 UNSUPPORTED_CCSIDS = {
